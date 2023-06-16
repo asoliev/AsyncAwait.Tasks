@@ -18,9 +18,13 @@ public class ManualAssistant : IAssistant
     {
         try
         {
-            await _supportService.RegisterSupportRequestAsync(requestInfo);
-            Console.WriteLine("Support request registered."); // this is for debugging purposes
-            return await _supportService.GetSupportInfoAsync(requestInfo).ConfigureAwait(false);
+            var t = _supportService.RegisterSupportRequestAsync(requestInfo);
+            Console.WriteLine(t.Status); // this is for debugging purposes
+            await t.ConfigureAwait(false);
+
+            return await _supportService
+                            .GetSupportInfoAsync(requestInfo)
+                            .ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {

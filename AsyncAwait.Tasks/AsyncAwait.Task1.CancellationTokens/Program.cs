@@ -15,7 +15,8 @@ namespace AsyncAwait.Task1.CancellationTokens;
 
 internal class Program
 {
-    private static CancellationTokenSource cancelTokenSource;
+    static CancellationTokenSource cancellationTokenSource;
+    static bool previousTask;
 
     /// <summary>
     /// The Main method should not be changed at all.
@@ -28,47 +29,53 @@ internal class Program
         Console.WriteLine("Use 'q' key to exit...");
         Console.WriteLine();
 
-        Console.Write("Enter N: ");
+        Console.WriteLine("Enter N: ");
 
         var input = Console.ReadLine();
         while (input.Trim().ToUpper() != "Q")
         {
-            bool threadStarted = false;
-            cancelTokenSource = new();
             if (int.TryParse(input, out var n))
             {
-                CancellationToken token = cancelTokenSource.Token;
-                CalculateSum(n, token);
-                threadStarted = true;
+                CalculateSum(n);
             }
             else
             {
                 Console.WriteLine($"Invalid integer: '{input}'. Please try again.");
-                Console.Write("Enter N: ");
+                Console.WriteLine("Enter N: ");
             }
 
             input = Console.ReadLine();
-            if (threadStarted) cancelTokenSource.Cancel();
         }
 
         Console.WriteLine("Press any key to continue");
-        Console.ReadKey();
-
-        cancelTokenSource?.Dispose();
+        Console.ReadLine();
     }
 
-    private static void CalculateSum(int n, CancellationToken token)
+    private static void CalculateSum(int n)
     {
+        if (previousTask)
+        {
+            cancellationTokenSource.Cancel();
+            previousTask = false;
+        }
+        cancellationTokenSource = new();
+        CancellationToken token = cancellationTokenSource.Token;
+        previousTask = true;
+
         Task.Run(() => {
             var sum = Calculator.Calculate(n, token);
 
             if (token.IsCancellationRequested)
                 Console.WriteLine($"Sum for {n} cancelled...");
             else
+            {
                 Console.WriteLine($"Sum for {n} = {sum}.");
+                Console.WriteLine();
+                Console.WriteLine("Enter N: ");
+            }
+
         }, token);
 
-        Console.WriteLine($"The task for {n} started...");
-        Console.WriteLine("Enter N to cancel the request:");
+        Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
     }
 }
